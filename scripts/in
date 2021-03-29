@@ -25,8 +25,10 @@ url="https://runtime.fivem.net/artifacts/fivem/build_proot_linux/master/${build_
 git_commit="$(printf '%s' "${build_id}" | cut -d '-' -f 2)"
 git_url="https://github.com/citizenfx/fivem/commit/${git_commit}"
 
+did_download="false"
 if [ "${do_download}" = "true" ]; then
 	curl >&2 -L -o "${dest}/fx.tar.xz" "${url}"
+	did_download="true"
 fi
 
 printf '%s' "${build_id}" > "${dest}/build_id"
@@ -39,5 +41,6 @@ cat <<EOF
   [ {"name":"url", "value":"${url}"}
   , {"name":"git_commit", "value":"${git_commit}"}
   , {"name":"git_url", "value":"${git_url}"}
+  , {"name":"did_download", "value":"${did_download}"}
   ]}
 EOF
