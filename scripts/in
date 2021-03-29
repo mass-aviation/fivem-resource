@@ -1,0 +1,43 @@
+#!/bin/sh
+set -e -u
+
+: "${TMPDIR:=/tmp}"
+
+dest="${1:-}"
+if [ -z "${dest}" ]; then
+	echo >&2 "No destination dir passed"
+	exit 1
+fi
+
+# Store the payload
+payload="$(mktemp "${TMPDIR}"/fivem-resource-request.XXXXXX)"
+cat > "${payload}" <&0
+
+build_id="$(jq -r '.version.build' < "${payload}")"
+
+if [ -z "${build_id}" ]; then
+	echo >&2 "No build number passed"
+	exit 1
+fi
+
+do_download="$(jq -r '.params.download // true' < "${payload}")"
+url="https://runtime.fivem.net/artifacts/fivem/build_proot_linux/master/${build_id}/fx.tar.xz"
+git_commit="$(printf '%s' "${build_id}" | cut -d '-' -f 2)"
+git_url="https://github.com/citizenfx/fivem/commit/${git_commit}"
+
+if [ "${do_download}" = "true" ]; then
+	curl >&2 -L -o "${dest}/fx.tar.xz" "${url}"
+fi
+
+printf '%s' "${build_id}" > "${dest}/build_id"
+printf '%s' "${git_commit}" > "${dest}/git_commit"
+printf '%s' "${git_url}" > "${dest}/git_url"
+
+cat <<EOF
+{ "version": {"build": "${build_id}"}
+, "metadata":
+  [ {"name":"url", "value":"${url}"}
+  , {"name":"git_commit", "value":"${git_commit}"}
+  , {"name":"git_url", "value":"${git_url}"}
+  ]}
+EOF
