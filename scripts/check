@@ -1,9 +1,7 @@
 #!/bin/sh
 set -e -u
 
-available_builds="$(curl -s https://runtime.fivem.net/artifacts/fivem/build_proot_linux/master/ | grep '<a *class="panel-block.*"*href=".*fx\.tar\.xz".*>$')"
-version="$(dirname "$(printf '%s' "${available_builds}" | sed 's/.\+href="\(.\+\)"\s\+style.*>/\1/g' | head -1 | tail -c +3)")"
-
-cat <<EOF
-[{"build":"${version}"}]
-EOF
+curl -s https://runtime.fivem.net/artifacts/fivem/build_proot_linux/master/ | grep '<a *class="panel-block.*"*href=".*fx\.tar\.xz".*>$' \
+	| sed 's/.\+href="\(.\+\)"\s\+style.*>/\1/g' \
+	| sed 's#\./\(.\+\)/fx\.tar\.xz#\1#g' \
+	| jq --raw-input --slurp '[split("\n") | map(select(. != "")) | .[] | {build: .}]'
